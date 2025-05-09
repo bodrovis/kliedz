@@ -1,5 +1,11 @@
 # Kliedz
 
+![npm](https://img.shields.io/npm/v/kliedz)
+![CI](https://github.com/bodrovis/kliedz/actions/workflows/ci.yml/badge.svg)
+[![NPM Downloads][npm-downloads-image]][npm-downloads-url]
+[![Code Coverage][coverage-image]][coverage-url]
+[![Maintainability][maintainability-image]][maintainability-url]
+
 **Kliedz** is a dead-simple, stateless logging utility for JavaScript and TypeScript.
 
 It lets you conditionally log messages based on a configured log level — without storing state, mutating anything, or introducing extra dependencies.
@@ -76,3 +82,10 @@ class MyClient {
 Licensed under MIT.
 
 (c) [Ilya Krukowski](https://bodrovis.tech/)
+
+[npm-downloads-image]: https://badgen.net/npm/dm/kliedz
+[npm-downloads-url]: https://npmcharts.com/compare/kliedz?minimal=true
+[coverage-image]: https://qlty.sh/badges/42567da8-5e74-410b-846f-74160289b944/test_coverage.svg
+[coverage-url]: https://qlty.sh/gh/bodrovis/projects/kliedz
+[maintainability-image]: https://qlty.sh/badges/42567da8-5e74-410b-846f-74160289b944/maintainability.svg
+[maintainability-url]: https://qlty.sh/gh/bodrovis/projects/kliedz
