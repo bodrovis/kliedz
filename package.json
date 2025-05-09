@@ -43,8 +43,8 @@
 		"url": "https://github.com/bodrovis/kliedz/issues"
 	},
 	"homepage": "https://github.com/bodrovis/kliedz",
-	"exports": "./dist/main.js",
-	"types": "./dist/main.d.ts",
+	"exports": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"directories": {
 		"lib": "./src",
 		"test": "./test"
