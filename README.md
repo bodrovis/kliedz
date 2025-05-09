@@ -21,7 +21,7 @@ logWithLevel(logLevel, "debug", "some debug info");       // won't log
 logWithLevel(logLevel, "info", "hello info");             // logs
 logWithLevel(logLevel, "error", "something exploded");    // logs
 
-logWithColor(logLevel, "error", "Boom");        					// printed in red
+logWithColor(logLevel, "error", "Boom");                  // printed in red
 ```
 
 ## How it works
