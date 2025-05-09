@@ -1,0 +1,59 @@
+{
+	"name": "kliedz",
+	"version": "1.0.0",
+	"description": "Dead-simple, stateless logging utility for JavaScript and TypeScript. Pure functions. No dependencies. Just log.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bodrovis/kliedz.git"
+	},
+	"keywords": [
+		"logger",
+		"logging",
+		"log-level",
+		"stateless",
+		"functional",
+		"typescript",
+		"javascript",
+		"console",
+		"minimal",
+		"lightweight",
+		"pure",
+		"no-dependencies"
+	],
+	"type": "module",
+	"scripts": {
+		"build": "rimraf dist && tsup",
+		"test": "vitest run",
+		"test:watch": "vitest watch",
+		"lint": "npx @biomejs/biome check ./",
+		"lint:fix": "npx @biomejs/biome check --write ./",
+		"lint:fix:unsafe": "npx @biomejs/biome check --write --unsafe ./"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
+		"@types/node": "^22.0.2",
+		"@vitest/coverage-istanbul": "^3.0.3",
+		"rimraf": "^6.0.1",
+		"tsup": "^8.3.0",
+		"typescript": "^5.8.2",
+		"vitest": "^3.0.3"
+	},
+	"bugs": {
+		"url": "https://github.com/bodrovis/kliedz/issues"
+	},
+	"homepage": "https://github.com/bodrovis/kliedz",
+	"exports": "./dist/main.js",
+	"types": "./dist/main.d.ts",
+	"directories": {
+		"lib": "./src",
+		"test": "./test"
+	},
+	"author": "Ilya Krukowski",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}
