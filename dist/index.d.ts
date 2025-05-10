@@ -20,6 +20,11 @@ type FormatterConfig = {
     prefixBuilder?: () => string;
 };
 
+type LogFunction = {
+    (...args: unknown[]): void;
+    (params: LogParams, ...args: unknown[]): void;
+};
+
 /**
  * Log with colourised output.
  * **Overloads**
@@ -37,4 +42,4 @@ declare function logWithColor(params: LogParams, ...args: unknown[]): void;
 declare function logWithLevel(...args: unknown[]): void;
 declare function logWithLevel(params: LogParams, ...args: unknown[]): void;
 
-export { type ConsoleMethod, type Formatter, type LogLevel, type LogParams, type LogThreshold, logWithColor, logWithLevel };
+export { type ConsoleMethod, type Formatter, type LogFunction, type LogLevel, type LogParams, type LogThreshold, logWithColor, logWithLevel };

@@ -3,3 +3,4 @@ export type { LogThreshold } from "./log_threshold.js";
 export type { ConsoleMethod } from "./console_method.js";
 export type { LogParams } from "./log_params.js";
 export type { Formatter } from "./formatter.js";
+export type { LogFunction } from "./log_function.js";
