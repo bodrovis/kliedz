@@ -1,14 +1,77 @@
+// src/logger/colors.ts
+var RESET_COLOR = "\x1B[0m";
+function getColorFor(level) {
+  if (!(level in LEVEL_COLORS)) {
+    throw new Error(`Unknown log level: "${level}"`);
+  }
+  return LEVEL_COLORS[level];
+}
+var LEVEL_COLORS = {
+  debug: "\x1B[90m",
+  // gray
+  info: "\x1B[36m",
+  // cyan
+  warn: "\x1B[33m",
+  // yellow/orange
+  error: "\x1B[31m"
+  // red
+};
+
+// src/logger/formatters.ts
+var plainFormatter = (config) => {
+  const prefix = getPrefix(config);
+  const body = config.args.map(formatArg).join(" ");
+  return `${prefix} ${body}`;
+};
+var colorFormatter = (config) => {
+  const color = getColorFor(config.level);
+  const prefix = getPrefix(config);
+  const body = config.args.map(formatArg).join(" ");
+  return `${color}${prefix} ${body}${RESET_COLOR}`;
+};
+function formatArg(arg) {
+  if (arg instanceof Error) {
+    return `${arg.name}: ${arg.message}
+${arg.stack ?? ""}`;
+  }
+  if (typeof arg === "object" && arg !== null) {
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return "[Unserializable Object]";
+    }
+  }
+  return String(arg);
+}
+function getPrefix({
+  level,
+  prefixBuilder,
+  withTimestamp = false
+}) {
+  if (typeof prefixBuilder === "function") {
+    return prefixBuilder();
+  }
+  const timestamp = withTimestamp ? `${(/* @__PURE__ */ new Date()).toISOString()} ` : "";
+  return `${timestamp}[${level.toUpperCase()}]`;
+}
+
 // src/logger/emitter.ts
-var consoleMethods = {
+function emitLog(level, message) {
+  const method = getMethodFor(level);
+  console[method](message);
+}
+function getMethodFor(level) {
+  if (!(level in CONSOLE_METHODS)) {
+    throw new Error(`Unknown method for level: "${level}"`);
+  }
+  return CONSOLE_METHODS[level];
+}
+var CONSOLE_METHODS = {
   debug: "log",
   info: "info",
   warn: "warn",
   error: "error"
 };
-function emitLog(level, message) {
-  const method = consoleMethods[level];
-  console[method](message);
-}
 
 // src/types/log_threshold.ts
 var logThresholds = [
@@ -29,33 +92,42 @@ function shouldLog(threshold, level) {
   return levelPriority[level] >= levelPriority[threshold];
 }
 
-// src/logger/log_with_level.ts
-function logWithLevel(threshold, level, ...args) {
+// src/logger/log_core.ts
+function logCore(params, formatter, ...args) {
+  const {
+    level,
+    prefixBuilder,
+    threshold = "info",
+    withTimestamp = false
+  } = params;
   if (!shouldLog(threshold, level)) return;
-  const prefix = `[${level.toUpperCase()}]`;
-  const msg = [prefix, ...args].map(String).join(" ");
+  const msg = formatter({ level, args, prefixBuilder, withTimestamp });
   emitLog(level, msg);
 }
 
-// src/logger/log_with_color.ts
-var RESET = "\x1B[0m";
-var levelColor = {
-  debug: "\x1B[90m",
-  // gray
-  info: "\x1B[36m",
-  // cyan
-  warn: "\x1B[33m",
-  // yellow/orange
-  error: "\x1B[31m"
-  // red
+// src/logger/loggers.ts
+var DEFAULT_LOG_PARAMS = {
+  level: "info",
+  threshold: "info"
 };
-function logWithColor(threshold, level, ...args) {
-  if (!shouldLog(threshold, level)) return;
-  const color = levelColor[level];
-  const prefix = `[${level.toUpperCase()}]`;
-  const body = args.map(String).join(" ");
-  const colored = `${color}${prefix} ${body}${RESET}`;
-  emitLog(level, colored);
+function logWithColor(first, ...rest) {
+  const formatter = colorFormatter;
+  if (isLogParams(first)) {
+    logCore(first, formatter, ...rest);
+  } else {
+    logCore(DEFAULT_LOG_PARAMS, formatter, first, ...rest);
+  }
+}
+function logWithLevel(first, ...rest) {
+  const formatter = plainFormatter;
+  if (isLogParams(first)) {
+    logCore(first, formatter, ...rest);
+  } else {
+    logCore(DEFAULT_LOG_PARAMS, formatter, first, ...rest);
+  }
+}
+function isLogParams(obj) {
+  return typeof obj === "object" && obj !== null && "level" in obj && typeof obj.level === "string";
 }
 export {
   logWithColor,
