@@ -13,6 +13,20 @@ export const levelPriority: Record<LogThreshold, number> = Object.fromEntries(
 ) as Record<LogThreshold, number>;
 
 /**
+ * Returns the numeric priority for a given log level or threshold.
+ * Throws if the level is unknown or not registered.
+ *
+ * @param level - Log level or threshold
+ * @returns Priority number
+ */
+export function getPriorityFor(level: LogLevel | LogThreshold): number {
+	if (!(level in levelPriority)) {
+		throw new Error(`Unknown log level/threshold: "${level}"`);
+	}
+	return levelPriority[level];
+}
+
+/**
  * Determines whether a message with the given `level` should be logged
  * based on the user-defined `threshold`.
  *
@@ -21,5 +35,5 @@ export const levelPriority: Record<LogThreshold, number> = Object.fromEntries(
  * @returns `true` if the message should be printed, `false` otherwise
  */
 export function shouldLog(threshold: LogThreshold, level: LogLevel): boolean {
-	return levelPriority[level] >= levelPriority[threshold];
+	return getPriorityFor(level) >= getPriorityFor(threshold);
 }

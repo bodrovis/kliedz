@@ -30,6 +30,7 @@ var colorFormatter = (config) => {
   return `${color}${prefix} ${body}${RESET_COLOR}`;
 };
 function formatArg(arg) {
+  if (typeof arg === "undefined") return "undefined";
   if (arg instanceof Error) {
     return `${arg.name}: ${arg.message}
 ${arg.stack ?? ""}`;
@@ -58,7 +59,7 @@ function getPrefix({
 // src/logger/emitter.ts
 function emitLog(level, message) {
   const method = getMethodFor(level);
-  console[method](message);
+  console[method]?.(message);
 }
 function getMethodFor(level) {
   if (!(level in CONSOLE_METHODS)) {
@@ -88,8 +89,14 @@ var levelPriority = Object.fromEntries(
     (level, index) => level === "silent" ? [level, 999] : [level, index]
   )
 );
+function getPriorityFor(level) {
+  if (!(level in levelPriority)) {
+    throw new Error(`Unknown log level/threshold: "${level}"`);
+  }
+  return levelPriority[level];
+}
 function shouldLog(threshold, level) {
-  return levelPriority[level] >= levelPriority[threshold];
+  return getPriorityFor(level) >= getPriorityFor(threshold);
 }
 
 // src/logger/log_core.ts
@@ -110,26 +117,22 @@ var DEFAULT_LOG_PARAMS = {
   level: "info",
   threshold: "info"
 };
-function logWithColor(first, ...rest) {
-  const formatter = colorFormatter;
-  if (isLogParams(first)) {
-    logCore(first, formatter, ...rest);
-  } else {
-    logCore(DEFAULT_LOG_PARAMS, formatter, first, ...rest);
-  }
-}
-function logWithLevel(first, ...rest) {
-  const formatter = plainFormatter;
-  if (isLogParams(first)) {
-    logCore(first, formatter, ...rest);
-  } else {
-    logCore(DEFAULT_LOG_PARAMS, formatter, first, ...rest);
-  }
-}
+var createLogger = (formatter) => {
+  return (first, ...rest) => {
+    const params = isLogParams(first) ? first : DEFAULT_LOG_PARAMS;
+    const args = isLogParams(first) ? rest : [first, ...rest];
+    logCore(params, formatter, ...args);
+  };
+};
+var logWithColor = createLogger(colorFormatter);
+var logWithLevel = createLogger(plainFormatter);
 function isLogParams(obj) {
   return typeof obj === "object" && obj !== null && "level" in obj && typeof obj.level === "string";
 }
 export {
+  createLogger,
+  formatArg,
+  getPrefix,
   logWithColor,
   logWithLevel
 };

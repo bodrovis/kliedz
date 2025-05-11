@@ -15,6 +15,28 @@ beforeEach(() => {
 
 afterEach(() => vi.restoreAllMocks());
 
+describe("createLogger - allows to create custom loggers", () => {
+	it("creates a logger with custom formatter", () => {
+		const params = { level: "info", threshold: "debug" };
+		const customFormatter = vi.fn(() => "[CUSTOM] hello");
+
+		const customLogger = logger.createLogger(customFormatter);
+
+		customLogger(params, "hello");
+
+		expect(coreSpy).toHaveBeenCalledWith(params, customFormatter, "hello");
+
+		customLogger("foo", 42);
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			customFormatter,
+			"foo",
+			42,
+		);
+	});
+});
+
 describe("logWithColor – overload resolution", () => {
 	it("delegates to logCore with DEFAULT params when no LogParams given", () => {
 		logger.logWithColor("quick", "msg");

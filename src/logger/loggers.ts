@@ -1,14 +1,25 @@
+import type { Formatter } from "../types/formatter.js";
+import type { LogFunction } from "../types/log_function.js";
 import type { LogParams } from "../types/log_params.js";
 import { colorFormatter, plainFormatter } from "./formatters.js";
 import { logCore } from "./log_core.js";
 
 /**
  * Default parameters used when the caller omits an explicit
- * `LogParams` object ( a “fire-and-forget” call).
+ * `LogParams` object ( a "fire-and-forget" call).
  */
 const DEFAULT_LOG_PARAMS: LogParams = {
 	level: "info",
 	threshold: "info",
+};
+
+export const createLogger = (formatter: Formatter): LogFunction => {
+	return (first: LogParams | unknown, ...rest: unknown[]): void => {
+		const params = isLogParams(first) ? first : DEFAULT_LOG_PARAMS;
+		const args = isLogParams(first) ? rest : [first, ...rest];
+
+		logCore(params, formatter, ...args);
+	};
 };
 
 /**
@@ -17,21 +28,7 @@ const DEFAULT_LOG_PARAMS: LogParams = {
  * 1. `(message, ...rest)` – uses sensible defaults (`info`/`info`).
  * 2. `(params, message, ...rest)` – full control.
  */
-export function logWithColor(...args: unknown[]): void;
-export function logWithColor(params: LogParams, ...args: unknown[]): void;
-
-export function logWithColor(
-	first: LogParams | unknown,
-	...rest: unknown[]
-): void {
-	const formatter = colorFormatter;
-
-	if (isLogParams(first)) {
-		logCore(first, formatter, ...rest);
-	} else {
-		logCore(DEFAULT_LOG_PARAMS, formatter, first, ...rest);
-	}
-}
+export const logWithColor: LogFunction = createLogger(colorFormatter);
 
 /**
  * Log without colours – plain prefix only.
@@ -39,21 +36,7 @@ export function logWithColor(
  * 1. `(message, ...rest)` – defaults to `info` level.
  * 2. `(params, message, ...rest)` – caller supplies `LogParams`.
  */
-export function logWithLevel(...args: unknown[]): void;
-export function logWithLevel(params: LogParams, ...args: unknown[]): void;
-
-export function logWithLevel(
-	first: LogParams | unknown,
-	...rest: unknown[]
-): void {
-	const formatter = plainFormatter;
-
-	if (isLogParams(first)) {
-		logCore(first, formatter, ...rest);
-	} else {
-		logCore(DEFAULT_LOG_PARAMS, formatter, first, ...rest);
-	}
-}
+export const logWithLevel: LogFunction = createLogger(plainFormatter);
 
 /**
  * Runtime guard that checks whether an arbitrary value is a `LogParams` bag.

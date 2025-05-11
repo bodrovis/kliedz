@@ -61,12 +61,34 @@ describe("plainFormatter", () => {
 		expect(msg).toBe(`${fakeDatetime} [WARN] warning!`);
 	});
 
+	it("formats undefined value", () => {
+		const msg = plainFormatter({
+			level: "info",
+			args: [undefined],
+		});
+		expect(msg).toBe("[INFO] undefined");
+	});
+
 	it("formats objects using JSON.stringify", () => {
 		const msg = plainFormatter({
 			level: "info",
 			args: [{ foo: "bar", n: 42 }],
 		});
 		expect(msg).toBe(`[INFO] {"foo":"bar","n":42}`);
+	});
+
+	it("prints Unserializable Object when the object cannot be properly processed", () => {
+		const baddyBadObj = {
+			toJSON() {
+				throw new Error("nope");
+			},
+		};
+
+		const msg = plainFormatter({
+			level: "info",
+			args: [baddyBadObj],
+		});
+		expect(msg).toBe("[INFO] [Unserializable Object]");
 	});
 
 	it("formats Error instances with name, message, and stack", () => {

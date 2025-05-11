@@ -11,7 +11,7 @@ import type { LogLevel } from "../types/log_level.js";
 export function emitLog(level: LogLevel, message: string): void {
 	const method = getMethodFor(level);
 
-	console[method](message);
+	console[method]?.(message);
 }
 
 /**

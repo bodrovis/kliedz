@@ -1,4 +1,5 @@
 import { levelPriority, shouldLog } from "../../src/logger/level_priority.js";
+import type { LogLevel } from "../../src/types/log_level.js";
 import type { LogThreshold } from "../../src/types/log_threshold.js";
 import { describe, expect, it } from "../setup.js";
 
@@ -54,5 +55,13 @@ describe("shouldLog", () => {
 		expect(shouldLog("debug", "info")).toBe(true);
 		expect(shouldLog("debug", "warn")).toBe(true);
 		expect(shouldLog("debug", "error")).toBe(true);
+	});
+
+	it("throws if level is unknown", () => {
+		const badLevel = "fatal" as unknown as LogLevel;
+
+		expect(() => shouldLog(badLevel, "info")).toThrowError(
+			/Unknown log level\/threshold: "fatal"/,
+		);
 	});
 });

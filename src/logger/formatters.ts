@@ -38,7 +38,9 @@ export const colorFormatter: Formatter = (config) => {
  * @param arg - Argument to format
  * @returns String ready to be printed
  */
-function formatArg(arg: unknown): string {
+export function formatArg(arg: unknown): string {
+	if (typeof arg === "undefined") return "undefined";
+
 	if (arg instanceof Error) {
 		return `${arg.name}: ${arg.message}\n${arg.stack ?? ""}`;
 	}

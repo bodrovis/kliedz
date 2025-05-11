@@ -6,7 +6,7 @@
 [![Code Coverage][coverage-image]][coverage-url]
 [![Maintainability][maintainability-image]][maintainability-url]
 
-**Kliedz** is a stateless logging utility for JavaScript and TypeScript.
+**Kliedz** is a stateless logging utility for JavaScript and TypeScript written with functional approach.
 
 ## Installation
 
@@ -44,7 +44,11 @@ Supported values:
 ## Usage
 
 ```js
-import { logWithColor, logWithLevel } from "./logger";
+import { logWithColor, logWithLevel } from "kliedz";
+
+// Quick start
+logWithColor("Hey!");
+logWithLevel({ level: "warn" }, "Something feels off");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Basic "just log it" call (uses default level = "info", threshold = "info")
@@ -177,6 +181,40 @@ You can control:
 - `threshold`: The cutoff level. Only messages with `level >= threshold` are printed.
 - `withTimestamp`: If true, includes an ISO timestamp in the prefix.
 - `prefixBuilder`: Optional function to fully customize the prefix format.
+
+## Creating custom logger
+
+It's possible to create a new logger with a custom formatting logic. For example:
+
+```js
+import { createLogger, getPrefix, formatArg } from "kliedz";
+import type { Formatter, FormatterConfig } from "kliedz";
+
+// Define a custom formatter
+const jsonFormatter: Formatter = (config: FormatterConfig): string => {
+  const prefix = getPrefix(config); // builds [LEVEL] or timestamped prefix
+
+  // config.args contains one or multiple values to log
+  // Create your message, optionally use formatArg to format these arguments
+  const message = config.args.map(formatArg).join(" "); 
+
+  // Return final string to log
+  return JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level: config.level,
+    prefix,
+    message,
+  });
+};
+
+// Create logger with formatter
+const logJson = createLogger(jsonFormatter);
+
+// Use it, optionally providing level and threshold
+logJson("This is a default info log");
+logJson({ level: "warn" }, "Something might be wrong", { id: 123 });
+logJson({ level: "error", withTimestamp: true }, new Error("kaboom"));
+```
 
 ## License
 
