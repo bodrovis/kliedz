@@ -1,5 +1,5 @@
 import type { Formatter, FormatterConfig } from "../types/formatter.js";
-import { RESET_COLOR, getColorFor } from "./colors.js";
+import { getColorFor, RESET_COLOR } from "./colors.js";
 
 /**
  * Formats a log message with no colors.
