@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import type { Formatter, FormatterConfig } from "../types/formatter.js";
 import { getColorFor, RESET_COLOR } from "./colors.js";
 
@@ -13,8 +14,7 @@ import { getColorFor, RESET_COLOR } from "./colors.js";
 export const plainFormatter: Formatter = (config) => {
 	const prefix = getPrefix(config);
 	const body = config.args.map(formatArg).join(" ");
-
-	return `${prefix} ${body}`;
+	return body ? `${prefix} ${body}` : prefix;
 };
 
 /**
@@ -28,8 +28,8 @@ export const colorFormatter: Formatter = (config) => {
 	const color = getColorFor(config.level);
 	const prefix = getPrefix(config);
 	const body = config.args.map(formatArg).join(" ");
-
-	return `${color}${prefix} ${body}${RESET_COLOR}`;
+	const line = body ? `${prefix} ${body}` : prefix;
+	return `${color}${line}${RESET_COLOR}`;
 };
 
 /**
@@ -40,20 +40,33 @@ export const colorFormatter: Formatter = (config) => {
  */
 export function formatArg(arg: unknown): string {
 	if (typeof arg === "undefined") return "undefined";
-
-	if (arg instanceof Error) {
+	if (arg instanceof Error)
 		return `${arg.name}: ${arg.message}\n${arg.stack ?? ""}`;
-	}
+	if (typeof arg === "string") return arg;
+	if (typeof arg === "bigint") return `${arg}n`;
+	if (typeof arg === "function")
+		return `[Function ${(arg).name || "anonymous"}]`;
 
 	if (typeof arg === "object" && arg !== null) {
 		try {
-			return JSON.stringify(arg);
+			return JSON.stringify(arg, jsonReplacer);
 		} catch {
-			return "[Unserializable Object]";
+			try {
+				return inspect(arg, { depth: null, breakLength: Infinity });
+			} catch {
+				return "[Unserializable Object]";
+			}
 		}
 	}
-
 	return String(arg);
+}
+
+function jsonReplacer(_k: string, v: unknown) {
+	if (typeof v === "bigint") return String(v);
+	if (typeof v === "symbol") return v.toString();
+	if (v instanceof Map) return Object.fromEntries(v);
+	if (v instanceof Set) return Array.from(v);
+	return v;
 }
 
 /**

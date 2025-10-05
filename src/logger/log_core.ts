@@ -28,6 +28,11 @@ export function logCore(
 
 	if (!shouldLog(threshold, level)) return;
 
-	const msg = formatter({ level, args, prefixBuilder, withTimestamp });
+	const msg = formatter({
+		level,
+		args,
+		withTimestamp,
+		...(prefixBuilder ? { prefixBuilder } : {}),
+	});
 	emitLog(level, msg);
 }

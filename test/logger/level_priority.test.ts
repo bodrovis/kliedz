@@ -9,7 +9,7 @@ describe("levelPriority", () => {
 		info: 1,
 		warn: 2,
 		error: 3,
-		silent: 999,
+		silent: Number.POSITIVE_INFINITY,
 	};
 
 	it("should match expected priority values", () => {

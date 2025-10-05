@@ -1,6 +1,6 @@
 import type { LogParams } from "./log_params.js";
 
-type LogFnArity1 = (...args: unknown[]) => void;
+type LogFnArity1 = (message: unknown, ...args: unknown[]) => void;
 
 // Full control: user provides LogParams
 type LogFnArity2 = (params: LogParams, ...args: unknown[]) => void;

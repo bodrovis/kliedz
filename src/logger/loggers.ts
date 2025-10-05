@@ -8,16 +8,16 @@ import { logCore } from "./log_core.js";
  * Default parameters used when the caller omits an explicit
  * `LogParams` object ( a "fire-and-forget" call).
  */
-const DEFAULT_LOG_PARAMS: LogParams = {
+const DEFAULT_LOG_PARAMS = Object.freeze({
 	level: "info",
 	threshold: "info",
-};
+} as const satisfies LogParams);
 
 export const createLogger = (formatter: Formatter): LogFunction => {
 	return (first: LogParams | unknown, ...rest: unknown[]): void => {
-		const params = isLogParams(first) ? first : DEFAULT_LOG_PARAMS;
-		const args = isLogParams(first) ? rest : [first, ...rest];
-
+		const provided = isLogParams(first) ? first : undefined;
+		const params: LogParams = { ...DEFAULT_LOG_PARAMS, ...provided };
+		const args = provided ? rest : [first, ...rest];
 		logCore(params, formatter, ...args);
 	};
 };
@@ -43,10 +43,15 @@ export const logWithLevel: LogFunction = createLogger(plainFormatter);
  * (Deliberately not exhaustive – we only need to know core keys.)
  */
 function isLogParams(obj: unknown): obj is LogParams {
-	return (
-		typeof obj === "object" &&
-		obj !== null &&
-		"level" in obj &&
-		typeof obj.level === "string"
-	);
+	if (typeof obj !== "object" || obj === null) return false;
+	const o = obj as Record<string, unknown>;
+	if (typeof o.level !== "string") return false;
+
+	if ("threshold" in o && typeof o.threshold !== "string") return false;
+	if ("withTimestamp" in o && typeof o.withTimestamp !== "boolean")
+		return false;
+	if ("prefixBuilder" in o && typeof o.prefixBuilder !== "function")
+		return false;
+
+	return true;
 }

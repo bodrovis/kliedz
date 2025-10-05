@@ -12,10 +12,12 @@ export default defineConfig({
 			shuffle: true,
 		},
 		coverage: {
-			enabled: isCI,
-			provider: "istanbul",
+			enabled: true,
+			provider: "v8",
 			reporter: isCI ? ["lcov"] : ["html", "text-summary"],
 			include: ["src/**/*.ts"],
+			exclude: ["src/index.ts"],
+			clean: true,
 		},
 		typecheck: {
 			enabled: true,

@@ -1,16 +1,23 @@
 import type { LogLevel } from "../types/log_level.js";
 import { type LogThreshold, logThresholds } from "../types/log_threshold.js";
 
+function fromEntriesStrict<K extends PropertyKey, V>(
+	entries: readonly (readonly [K, V])[],
+): Record<K, V> {
+	return Object.fromEntries(entries) as Record<K, V>;
+}
+
 /**
  * Assigns a numeric priority to each log threshold level.
  * Lower numbers mean more verbose; higher means more critical.
- * "silent" is given a very high value (999) to suppress all output.
+ * "silent" is given a very high value to suppress all output.
  */
-export const levelPriority: Record<LogThreshold, number> = Object.fromEntries(
-	logThresholds.map((level, index) =>
-		level === "silent" ? [level, 999] : [level, index],
+export const levelPriority = fromEntriesStrict(
+	logThresholds.map(
+		(level, index) =>
+			[level, level === "silent" ? Number.POSITIVE_INFINITY : index] as const,
 	),
-) as Record<LogThreshold, number>;
+) satisfies Record<LogThreshold, number>;
 
 /**
  * Returns the numeric priority for a given log level or threshold.
@@ -20,10 +27,10 @@ export const levelPriority: Record<LogThreshold, number> = Object.fromEntries(
  * @returns Priority number
  */
 export function getPriorityFor(level: LogLevel | LogThreshold): number {
-	if (!(level in levelPriority)) {
+	const p = levelPriority[level as LogThreshold];
+	if (p === undefined)
 		throw new Error(`Unknown log level/threshold: "${level}"`);
-	}
-	return levelPriority[level];
+	return p;
 }
 
 /**

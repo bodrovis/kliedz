@@ -33,11 +33,17 @@ describe("getPrefix", () => {
 	it("uses custom prefixBuilder if provided", () => {
 		const result = getPrefix({
 			level: "warn",
+			withTimestamp: true,
 			args: [],
 			prefixBuilder: () => ">>>CUSTOM<<<",
 		});
 
 		expect(result).toBe(">>>CUSTOM<<<");
+	});
+
+	it("returns prefix only when no args", () => {
+		const result = getPrefix({ level: "info", args: [] });
+		expect(result).toBe("[INFO]");
 	});
 });
 
@@ -77,7 +83,7 @@ describe("plainFormatter", () => {
 		expect(msg).toBe(`[INFO] {"foo":"bar","n":42}`);
 	});
 
-	it("prints Unserializable Object when the object cannot be properly processed", () => {
+	it("prints Function when the object has a weird function inside", () => {
 		const baddyBadObj = {
 			toJSON() {
 				throw new Error("nope");
@@ -88,7 +94,89 @@ describe("plainFormatter", () => {
 			level: "info",
 			args: [baddyBadObj],
 		});
+		expect(msg).toBe("[INFO] { toJSON: [Function: toJSON] }");
+	});
+
+	it("formats a named function arg compactly", () => {
+		function doStuff() {}
+		const msg = plainFormatter({ level: "info", args: [doStuff] });
+		expect(msg).toBe("[INFO] [Function doStuff]");
+	});
+
+	it("formats an anonymous function arg compactly", () => {
+		const msg = plainFormatter({ level: "info", args: [() => {}] });
+
+		expect(msg).toBe("[INFO] [Function anonymous]");
+	});
+
+	it("formats bigint values with trailing 'n'", () => {
+		const msg = plainFormatter({ level: "info", args: [123n] });
+		expect(msg).toBe("[INFO] 123n");
+	});
+
+	it("formats booleans as strings", () => {
+		const msg = plainFormatter({ level: "info", args: [true] });
+		expect(msg).toBe("[INFO] true");
+	});
+
+	it("stringifies bigint inside objects as strings (JSON-safe)", () => {
+		const msg = plainFormatter({ level: "info", args: [{ id: 123n }] });
+		expect(msg).toBe('[INFO] {"id":"123"}');
+	});
+
+	it("stringifies symbol inside objects via toString()", () => {
+		const sym = Symbol("x");
+		const msg = plainFormatter({ level: "info", args: [{ s: sym }] });
+		expect(msg).toBe(`[INFO] {"s":"${sym.toString()}"}`);
+	});
+
+	it("stringifies Set as array", () => {
+		const msg = plainFormatter({ level: "info", args: [new Set([1, 2])] });
+		expect(msg).toBe("[INFO] [1,2]");
+	});
+
+	it("stringifies Map via Object.fromEntries (stringifying keys)", () => {
+		const m = new Map<string | number, string | number>([["a", 1]]);
+		const msg = plainFormatter({ level: "info", args: [m] });
+		expect(msg).toBe('[INFO] {"a":1}');
+	});
+
+	it("returns '[Unserializable Object]' if even inspect throws", async () => {
+		// biome-ignore lint/suspicious/noExplicitAny: force self-loop here
+		const a: any = {};
+		a.self = a;
+
+		vi.doMock("node:util", () => {
+			return {
+				inspect: () => {
+					throw new Error("nope");
+				},
+			};
+		});
+
+		vi.resetModules();
+		const { plainFormatter } = await import("../../src/logger/formatters.js");
+
+		const msg = plainFormatter({ level: "info", args: [a] });
 		expect(msg).toBe("[INFO] [Unserializable Object]");
+
+		vi.doUnmock("node:util");
+		vi.resetModules();
+	});
+
+	it("formats Error without stack gracefully", () => {
+		const err = new Error("oops");
+		// biome-ignore lint/suspicious/noExplicitAny: force stack deletion
+		delete (err as any).stack;
+
+		const msg = plainFormatter({ level: "error", args: [err] });
+
+		expect(msg).toBe("[ERROR] Error: oops\n");
+	});
+
+	it("emits only prefix when args are empty", () => {
+		const msg = plainFormatter({ level: "info", args: [] });
+		expect(msg).toBe("[INFO]");
 	});
 
 	it("formats Error instances with name, message, and stack", () => {
@@ -99,6 +187,13 @@ describe("plainFormatter", () => {
 		});
 		expect(msg).toContain("Error: something exploded");
 		expect(msg).toContain(err.stack?.split("\n")[0] ?? "");
+	});
+
+	it("includes name/message and some stack without duplicating constraints", () => {
+		const err = new Error("boom");
+		const msg = plainFormatter({ level: "error", args: [err] });
+		expect(msg).toContain("Error: boom");
+		expect(msg.split("\n").length).toBeGreaterThan(1);
 	});
 
 	it("formats mixed values cleanly", () => {
@@ -158,6 +253,24 @@ describe("colorFormatter", () => {
 		expect(msg).toContain("Error: oh no");
 		expect(msg).toContain(err.stack?.split("\n")[0] ?? "");
 		expect(msg.startsWith("\x1b")).toBe(true);
+		expect(msg.endsWith(RESET_COLOR)).toBe(true);
+	});
+
+	it("colors prefix even when no body (no args)", () => {
+		const msg = colorFormatter({ level: "warn", args: [] });
+		expect(msg.startsWith("\x1b")).toBe(true);
+		expect(msg).toContain("[WARN]");
+		expect(msg.endsWith(RESET_COLOR)).toBe(true);
+	});
+
+	it("supports timestamp + no body", () => {
+		const msg = colorFormatter({
+			level: "info",
+			withTimestamp: true,
+			args: [],
+		});
+		expect(msg.startsWith("\x1b")).toBe(true);
+		expect(msg).toContain(`${fakeDatetime} [INFO]`);
 		expect(msg.endsWith(RESET_COLOR)).toBe(true);
 	});
 });

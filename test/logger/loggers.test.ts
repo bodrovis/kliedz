@@ -77,9 +77,128 @@ describe("logWithLevel – overload resolution", () => {
 		logger.logWithLevel({ level: "warn" }, ...msgArgs);
 
 		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "warn" },
+			expect.objectContaining({ level: "warn", threshold: "info" }),
 			plainFormatter,
 			...msgArgs,
+		);
+	});
+});
+
+describe("isLogParams (behaviour via createLogger)", () => {
+	it("rejects non-object (number) → uses defaults, treats value as message", () => {
+		logger.logWithLevel(123, ...msgArgs);
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			123,
+			...msgArgs,
+		);
+	});
+
+	it("rejects null → defaults + payload", () => {
+		logger.logWithLevel(null, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			null,
+			"x",
+		);
+	});
+
+	it("rejects object without level → defaults + payload", () => {
+		logger.logWithLevel({ threshold: "warn" }, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			{ threshold: "warn" },
+			"x",
+		);
+	});
+
+	it("rejects level of wrong type → defaults + payload", () => {
+		logger.logWithLevel({ level: 42 }, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			{ level: 42 },
+			"x",
+		);
+	});
+
+	it("rejects bad threshold type → defaults + payload", () => {
+		logger.logWithLevel({ level: "info", threshold: 7 }, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			{ level: "info", threshold: 7 },
+			"x",
+		);
+	});
+
+	it("rejects bad withTimestamp type → defaults + payload", () => {
+		logger.logWithLevel({ level: "warn", withTimestamp: "yes" }, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			{ level: "warn", withTimestamp: "yes" },
+			"x",
+		);
+	});
+
+	it("rejects bad prefixBuilder type → defaults + payload", () => {
+		logger.logWithLevel({ level: "warn", prefixBuilder: "->" }, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			{ level: "warn", prefixBuilder: "->" },
+			"x",
+		);
+	});
+
+	it("accepts minimal valid params (level only) → merges defaults", () => {
+		logger.logWithLevel({ level: "warn" }, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "warn", threshold: "info" },
+			plainFormatter,
+			"x",
+		);
+	});
+
+	it("accepts valid optional fields (withTimestamp, prefixBuilder) → forwards them", () => {
+		const pb = () => "PB";
+		logger.logWithLevel(
+			{ level: "debug", withTimestamp: true, prefixBuilder: pb },
+			"x",
+			"y",
+		);
+
+		// проверяем, что дефолт threshold домержился, а опции приехали как есть
+		const [params, fmt, ...rest] = coreSpy.mock.calls[0];
+		expect(params).toEqual({
+			level: "debug",
+			threshold: "info",
+			withTimestamp: true,
+			prefixBuilder: pb,
+		});
+		expect(fmt).toBe(plainFormatter);
+		expect(rest).toEqual(["x", "y"]);
+	});
+
+	it("does not override provided threshold", () => {
+		logger.logWithLevel({ level: "warn", threshold: "error" }, "boom");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "warn", threshold: "error" },
+			plainFormatter,
+			"boom",
 		);
 	});
 });

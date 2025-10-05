@@ -3,7 +3,14 @@ import * as priority from "../../src/logger/level_priority.js";
 import { logCore } from "../../src/logger/log_core.js";
 import type { Formatter } from "../../src/types/formatter.js";
 import type { LogParams } from "../../src/types/log_params.js";
-import { afterEach, describe, expect, it, vi } from "../setup.ts";
+import {
+	afterEach,
+	describe,
+	expect,
+	it,
+	type MockedFunction,
+	vi,
+} from "../setup.ts";
 
 const baseParams: LogParams = { level: "info", threshold: "debug" };
 
@@ -73,5 +80,29 @@ describe("logCore", () => {
 			withTimestamp: true,
 		});
 		expect(consoleInfoSpy).toHaveBeenCalledWith("formatted");
+	});
+
+	it("passes prefixBuilder through to formatter params when provided", () => {
+		const pb = () => ">>>PB<<<";
+
+		const fmtSpy = vi.fn(() => "ok") as MockedFunction<Formatter>;
+		const emitLogSpy = vi
+			.spyOn(emitter, "emitLog")
+			.mockImplementation(() => void 0);
+		vi.spyOn(priority, "shouldLog").mockReturnValue(true);
+
+		logCore(
+			{ level: "info", threshold: "debug", prefixBuilder: pb },
+			fmtSpy,
+			"x",
+		);
+
+		expect(fmtSpy).toHaveBeenCalledTimes(1);
+		const callArg = fmtSpy.mock.calls[0][0];
+
+		expect("prefixBuilder" in callArg).toBe(true);
+		expect(callArg.prefixBuilder).toBe(pb);
+
+		expect(emitLogSpy).toHaveBeenCalledWith("info", "ok");
 	});
 });

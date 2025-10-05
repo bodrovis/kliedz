@@ -1,5 +1,16 @@
 import type { LogLevel } from "../types/log_level.js";
 
+/**
+ * ANSI color codes mapped to log levels for terminal output.
+ * These control how the log prefix is rendered in supported terminals.
+ */
+const LEVEL_COLORS = {
+	debug: "\x1b[90m", // gray
+	info: "\x1b[36m", // cyan
+	warn: "\x1b[33m", // yellow/orange
+	error: "\x1b[31m", // red
+} as const satisfies Record<LogLevel, string>;
+
 export const RESET_COLOR = "\x1b[0m";
 
 /**
@@ -16,14 +27,3 @@ export function getColorFor(level: LogLevel): string {
 
 	return LEVEL_COLORS[level];
 }
-
-/**
- * ANSI color codes mapped to log levels for terminal output.
- * These control how the log prefix is rendered in supported terminals.
- */
-const LEVEL_COLORS: Record<LogLevel, string> = {
-	debug: "\x1b[90m", // gray
-	info: "\x1b[36m", // cyan
-	warn: "\x1b[33m", // yellow/orange
-	error: "\x1b[31m", // red
-};
