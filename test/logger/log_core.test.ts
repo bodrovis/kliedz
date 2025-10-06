@@ -105,4 +105,63 @@ describe("logCore", () => {
 
 		expect(emitLogSpy).toHaveBeenCalledWith("info", "ok");
 	});
+
+	it("writes to console.error if formatter fails", () => {
+		const shouldLogSpy = vi.spyOn(priority, "shouldLog").mockReturnValue(true);
+		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		const boom = new Error("formatter exploded");
+		const badFormatter = () => {
+			throw boom;
+		};
+
+		expect(() => logCore(baseParams, badFormatter, "hello")).not.toThrow();
+
+		expect(consoleSpy).toHaveBeenCalledTimes(1);
+		const logged = (consoleSpy.mock.calls[0]?.[0] ?? "") as string;
+		expect(logged).toContain("[logging-error @ ");
+		expect(logged).toContain("Error: formatter exploded");
+
+		shouldLogSpy.mockRestore();
+		consoleSpy.mockRestore();
+	});
+
+	it("writes to console.error if formatter fails and error is weird", () => {
+		const shouldLogSpy = vi.spyOn(priority, "shouldLog").mockReturnValue(true);
+		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		const badFormatter = () => {
+			throw 42;
+		};
+
+		expect(() => logCore(baseParams, badFormatter, "hello")).not.toThrow();
+
+		expect(consoleSpy).toHaveBeenCalledTimes(1);
+		const logged = (consoleSpy.mock.calls[0]?.[0] ?? "") as string;
+		expect(logged).toContain("[logging-error @ ");
+		expect(logged).toContain("42");
+
+		shouldLogSpy.mockRestore();
+		consoleSpy.mockRestore();
+	});
+
+	it("should not fail even if console.error returned an error", () => {
+		vi.spyOn(priority, "shouldLog").mockReturnValue(true);
+
+		const badFormatter = () => {
+			throw new Error("boom");
+		};
+
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {
+			throw new Error("console.error is broken");
+		});
+
+		expect(() => {
+			logCore(baseParams, badFormatter, "arg");
+		}).not.toThrow();
+
+		expect(errorSpy).toHaveBeenCalledTimes(1);
+
+		errorSpy.mockRestore();
+	});
 });

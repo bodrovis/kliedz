@@ -5,12 +5,12 @@ import type { LogLevel } from "../types/log_level.js";
  * Maps each log level to the corresponding console method.
  * Used internally to dispatch messages to the correct output function.
  */
-const CONSOLE_METHODS = {
+const CONSOLE_METHODS = Object.freeze({
 	debug: "log",
 	info: "info",
 	warn: "warn",
 	error: "error",
-} as const satisfies Record<LogLevel, ConsoleMethod>;
+} as const satisfies Record<LogLevel, ConsoleMethod>);
 
 /**
  * Returns console method to use for a given log level.
@@ -34,6 +34,6 @@ function getMethodFor(level: LogLevel): ConsoleMethod {
  */
 export function emitLog(level: LogLevel, message: string): void {
 	const method = getMethodFor(level);
-
-	console[method]?.(message);
+	const fn = console[method] as (msg?: unknown, ...rest: unknown[]) => void;
+	fn(message);
 }

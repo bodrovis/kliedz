@@ -61,14 +61,6 @@ export function formatArg(arg: unknown): string {
 	return String(arg);
 }
 
-function jsonReplacer(_k: string, v: unknown) {
-	if (typeof v === "bigint") return String(v);
-	if (typeof v === "symbol") return v.toString();
-	if (v instanceof Map) return Object.fromEntries(v);
-	if (v instanceof Set) return Array.from(v);
-	return v;
-}
-
 /**
  * Builds the log prefix for a given message.
  * If a custom `prefixBuilder` is provided in the config, it's used directly.
@@ -89,4 +81,12 @@ export function getPrefix({
 	const timestamp = withTimestamp ? `${new Date().toISOString()} ` : "";
 
 	return `${timestamp}[${level.toUpperCase()}]`;
+}
+
+function jsonReplacer(_k: string, v: unknown) {
+	if (typeof v === "bigint") return String(v);
+	if (typeof v === "symbol") return v.toString();
+	if (v instanceof Map) return Object.fromEntries(v);
+	if (v instanceof Set) return Array.from(v);
+	return v;
 }

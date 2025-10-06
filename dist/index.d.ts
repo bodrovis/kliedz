@@ -6,7 +6,7 @@ type LogLevel = Exclude<LogThreshold, "silent">;
 type Formatter = (config: FormatterConfig) => string;
 type FormatterConfig = {
     level: LogLevel;
-    args: unknown[];
+    args: readonly unknown[];
     withTimestamp?: boolean;
     prefixBuilder?: () => string;
 };

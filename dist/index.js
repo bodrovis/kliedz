@@ -2,7 +2,7 @@
 import { inspect } from "util";
 
 // src/logger/colors.ts
-var LEVEL_COLORS = {
+var LEVEL_COLORS = Object.freeze({
   debug: "\x1B[90m",
   // gray
   info: "\x1B[36m",
@@ -11,10 +11,10 @@ var LEVEL_COLORS = {
   // yellow/orange
   error: "\x1B[31m"
   // red
-};
+});
 var RESET_COLOR = "\x1B[0m";
 function getColorFor(level) {
-  if (!(level in LEVEL_COLORS)) {
+  if (!Object.hasOwn(LEVEL_COLORS, level)) {
     throw new Error(`Unknown log level: "${level}"`);
   }
   return LEVEL_COLORS[level];
@@ -55,13 +55,6 @@ ${arg.stack ?? ""}`;
   }
   return String(arg);
 }
-function jsonReplacer(_k, v) {
-  if (typeof v === "bigint") return String(v);
-  if (typeof v === "symbol") return v.toString();
-  if (v instanceof Map) return Object.fromEntries(v);
-  if (v instanceof Set) return Array.from(v);
-  return v;
-}
 function getPrefix({
   level,
   prefixBuilder,
@@ -73,14 +66,21 @@ function getPrefix({
   const timestamp = withTimestamp ? `${(/* @__PURE__ */ new Date()).toISOString()} ` : "";
   return `${timestamp}[${level.toUpperCase()}]`;
 }
+function jsonReplacer(_k, v) {
+  if (typeof v === "bigint") return String(v);
+  if (typeof v === "symbol") return v.toString();
+  if (v instanceof Map) return Object.fromEntries(v);
+  if (v instanceof Set) return Array.from(v);
+  return v;
+}
 
 // src/logger/emitter.ts
-var CONSOLE_METHODS = {
+var CONSOLE_METHODS = Object.freeze({
   debug: "log",
   info: "info",
   warn: "warn",
   error: "error"
-};
+});
 function getMethodFor(level) {
   const m = CONSOLE_METHODS[level];
   if (!m) throw new Error(`Unknown method for level: "${level}"`);
@@ -88,7 +88,8 @@ function getMethodFor(level) {
 }
 function emitLog(level, message) {
   const method = getMethodFor(level);
-  console[method]?.(message);
+  const fn = console[method];
+  fn(message);
 }
 
 // src/types/log_threshold.ts
@@ -128,13 +129,21 @@ function logCore(params, formatter, ...args) {
     withTimestamp = false
   } = params;
   if (!shouldLog(threshold, level)) return;
-  const msg = formatter({
-    level,
-    args,
-    withTimestamp,
-    ...prefixBuilder ? { prefixBuilder } : {}
-  });
-  emitLog(level, msg);
+  try {
+    const msg = formatter({
+      level,
+      args,
+      withTimestamp,
+      ...prefixBuilder ? { prefixBuilder } : {}
+    });
+    emitLog(level, msg);
+  } catch (err) {
+    try {
+      const fallback = `[logging-error @ ${(/* @__PURE__ */ new Date()).toISOString()}] ` + (err instanceof Error ? `${err.name}: ${err.message}` : String(err));
+      console.error(fallback);
+    } catch {
+    }
+  }
 }
 
 // src/logger/loggers.ts
@@ -156,10 +165,11 @@ function isLogParams(obj) {
   if (typeof obj !== "object" || obj === null) return false;
   const o = obj;
   if (typeof o.level !== "string") return false;
-  if ("threshold" in o && typeof o.threshold !== "string") return false;
-  if ("withTimestamp" in o && typeof o.withTimestamp !== "boolean")
+  if ("threshold" in o && o.threshold !== void 0 && typeof o.threshold !== "string")
     return false;
-  if ("prefixBuilder" in o && typeof o.prefixBuilder !== "function")
+  if ("withTimestamp" in o && o.withTimestamp !== void 0 && typeof o.withTimestamp !== "boolean")
+    return false;
+  if ("prefixBuilder" in o && o.prefixBuilder !== void 0 && typeof o.prefixBuilder !== "function")
     return false;
   return true;
 }

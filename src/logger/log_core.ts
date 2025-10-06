@@ -28,11 +28,20 @@ export function logCore(
 
 	if (!shouldLog(threshold, level)) return;
 
-	const msg = formatter({
-		level,
-		args,
-		withTimestamp,
-		...(prefixBuilder ? { prefixBuilder } : {}),
-	});
-	emitLog(level, msg);
+	try {
+		const msg = formatter({
+			level,
+			args,
+			withTimestamp,
+			...(prefixBuilder ? { prefixBuilder } : {}),
+		});
+		emitLog(level, msg);
+	} catch (err) {
+		try {
+			const fallback =
+				`[logging-error @ ${new Date().toISOString()}] ` +
+				(err instanceof Error ? `${err.name}: ${err.message}` : String(err));
+			console.error(fallback);
+		} catch {}
+	}
 }

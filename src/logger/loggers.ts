@@ -45,12 +45,26 @@ export const logWithLevel: LogFunction = createLogger(plainFormatter);
 function isLogParams(obj: unknown): obj is LogParams {
 	if (typeof obj !== "object" || obj === null) return false;
 	const o = obj as Record<string, unknown>;
+
 	if (typeof o.level !== "string") return false;
 
-	if ("threshold" in o && typeof o.threshold !== "string") return false;
-	if ("withTimestamp" in o && typeof o.withTimestamp !== "boolean")
+	if (
+		"threshold" in o &&
+		o.threshold !== undefined &&
+		typeof o.threshold !== "string"
+	)
 		return false;
-	if ("prefixBuilder" in o && typeof o.prefixBuilder !== "function")
+	if (
+		"withTimestamp" in o &&
+		o.withTimestamp !== undefined &&
+		typeof o.withTimestamp !== "boolean"
+	)
+		return false;
+	if (
+		"prefixBuilder" in o &&
+		o.prefixBuilder !== undefined &&
+		typeof o.prefixBuilder !== "function"
+	)
 		return false;
 
 	return true;
