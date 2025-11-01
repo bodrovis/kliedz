@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Require Node 20+
+
 ## 1.1.0
 
 * Stricter logic, various code updates
