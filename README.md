@@ -222,7 +222,7 @@ Licensed under MIT.
 
 (c) [Ilya Krukowski](https://bodrovis.tech/)
 
-[npm-downloads-image]: https://badgen.net/npm/dm/kliedz
+[npm-downloads-image]: https://img.shields.io/npm/dm/kliedz
 [npm-downloads-url]: https://npmcharts.com/compare/kliedz?minimal=true
 [coverage-image]: https://qlty.sh/gh/bodrovis/projects/kliedz/coverage.svg
 [coverage-url]: https://qlty.sh/gh/bodrovis/projects/kliedz
