@@ -1,20 +1,14 @@
-declare const logThresholds: readonly [
-	"debug",
-	"info",
-	"warn",
-	"error",
-	"silent",
-];
+declare const logThresholds: readonly ["debug", "info", "warn", "error", "silent"];
 type LogThreshold = (typeof logThresholds)[number];
 
 type LogLevel = Exclude<LogThreshold, "silent">;
 
 type Formatter = (config: FormatterConfig) => string;
 type FormatterConfig = {
-	level: LogLevel;
-	args: readonly unknown[];
-	withTimestamp?: boolean;
-	prefixBuilder?: () => string;
+    level: LogLevel;
+    args: readonly unknown[];
+    withTimestamp?: boolean;
+    prefixBuilder?: () => string;
 };
 
 /**
@@ -32,17 +26,13 @@ declare function formatArg(arg: unknown): string;
  * @param config - Formatter config including log level and optional timestamp/custom builder.
  * @returns A formatted prefix string.
  */
-declare function getPrefix({
-	level,
-	prefixBuilder,
-	withTimestamp,
-}: FormatterConfig): string;
+declare function getPrefix({ level, prefixBuilder, withTimestamp, }: FormatterConfig): string;
 
 type LogParams = {
-	level: LogLevel;
-	threshold?: LogThreshold;
-	withTimestamp?: boolean;
-	prefixBuilder?: () => string;
+    level: LogLevel;
+    threshold?: LogThreshold;
+    withTimestamp?: boolean;
+    prefixBuilder?: () => string;
 };
 
 type LogFnArity1 = (message: unknown, ...args: unknown[]) => void;
@@ -67,17 +57,4 @@ declare const logWithLevel: LogFunction;
 
 type ConsoleMethod = "log" | "info" | "warn" | "error";
 
-export {
-	type ConsoleMethod,
-	type Formatter,
-	type FormatterConfig,
-	type LogFunction,
-	type LogLevel,
-	type LogParams,
-	type LogThreshold,
-	createLogger,
-	formatArg,
-	getPrefix,
-	logWithColor,
-	logWithLevel,
-};
+export { type ConsoleMethod, type Formatter, type FormatterConfig, type LogFunction, type LogLevel, type LogParams, type LogThreshold, createLogger, formatArg, getPrefix, logWithColor, logWithLevel };
