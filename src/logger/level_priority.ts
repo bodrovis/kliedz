@@ -27,7 +27,7 @@ export const levelPriority = fromEntriesStrict(
  * @returns Priority number
  */
 export function getPriorityFor(level: LogLevel | LogThreshold): number {
-	const p = levelPriority[level as LogThreshold];
+	const p = levelPriority[level];
 	if (p === undefined)
 		throw new Error(`Unknown log level/threshold: "${level}"`);
 	return p;

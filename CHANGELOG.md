@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0 (17-Dec-2025)
 
 * Require Node 20+
 
