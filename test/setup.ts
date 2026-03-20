@@ -8,4 +8,4 @@ import {
 	vi,
 } from "vitest";
 
-export { afterEach, beforeEach, describe, expect, it, vi, MockedFunction };
+export { afterEach, beforeEach, describe, expect, it, MockedFunction, vi };
