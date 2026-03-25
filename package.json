@@ -7,23 +7,9 @@
 		"type": "git",
 		"url": "git+https://github.com/bodrovis/kliedz.git"
 	},
-	"keywords": [
-		"logger",
-		"logging",
-		"log-level",
-		"stateless",
-		"functional",
-		"typescript",
-		"javascript",
-		"console",
-		"minimal",
-		"lightweight",
-		"pure",
-		"no-dependencies"
-	],
 	"type": "module",
 	"scripts": {
-		"build": "tsup",
+		"build": "tsdown",
 		"test": "vitest run",
 		"test:watch": "vitest watch",
 		"lint": "npx @biomejs/biome check ./",
@@ -34,8 +20,8 @@
 		"@biomejs/biome": "^2.0.6",
 		"@types/node": "^25.0.3",
 		"@vitest/coverage-v8": "^4.0.6",
-		"tsup": "^8.3.0",
-		"typescript": "^5.8.2",
+		"tsdown": "^0.21.4",
+		"typescript": "^6.0.2",
 		"vitest": "^4.0.6"
 	},
 	"bugs": {
@@ -52,6 +38,20 @@
 	"publishConfig": {
 		"access": "public"
 	},
+	"keywords": [
+		"logger",
+		"logging",
+		"log-level",
+		"stateless",
+		"functional",
+		"typescript",
+		"javascript",
+		"console",
+		"minimal",
+		"lightweight",
+		"pure",
+		"no-dependencies"
+	],
 	"engines": {
 		"node": ">=20"
 	}

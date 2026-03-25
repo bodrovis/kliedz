@@ -1,8 +1,9 @@
 {
 	"compilerOptions": {
-		"target": "ES2024",
+		"target": "ES2025",
 		"module": "Node18",
 		"moduleResolution": "node16",
+		"rootDir": "./src",
 		"outDir": "dist",
 		"sourceMap": true,
 		"strict": true,
@@ -18,7 +19,8 @@
 		"verbatimModuleSyntax": true,
 		"exactOptionalPropertyTypes": true,
 		"noUncheckedIndexedAccess": true,
-		"useUnknownInCatchVariables": true
+		"useUnknownInCatchVariables": true,
+		"types": ["node"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist"]
