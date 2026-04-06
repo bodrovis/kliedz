@@ -1,6 +1,6 @@
 {
 	"name": "kliedz",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"description": "Dead-simple, stateless logging utility for JavaScript and TypeScript. Pure functions. No dependencies. Just log.",
 	"license": "MIT",
 	"repository": {
