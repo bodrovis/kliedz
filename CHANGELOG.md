@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.3 (01-May-2026)
+
+* Update dependencies
+* Fix entrypoint
+
 ## 2.1.0 (06-Apr-2026)
 
 * Use Typescript 6
