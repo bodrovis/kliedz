@@ -19,6 +19,7 @@ jobs:
           - 23
           - 24
           - 25
+          - 26
         os:
           - ubuntu-latest
     steps:
