@@ -1,6 +1,6 @@
 {
 	"name": "kliedz",
-	"version": "2.1.3",
+	"version": "2.2.0",
 	"description": "Dead-simple, stateless logging utility for JavaScript and TypeScript. Pure functions. No dependencies. Just log.",
 	"license": "MIT",
 	"repository": {
@@ -21,7 +21,7 @@
 		"@types/node": "^26.1.0",
 		"@vitest/coverage-v8": "^4.0.6",
 		"tsdown": "^0.22.0",
-		"typescript": "^6.0.2",
+		"typescript": "^7.0.2",
 		"vitest": "^4.0.6"
 	},
 	"bugs": {
@@ -29,13 +29,16 @@
 	},
 	"homepage": "https://github.com/bodrovis/kliedz",
 	"exports": {
-		".": "./dist/index.mjs"
+		".": {
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		}
 	},
 	"types": "./dist/index.d.mts",
-	"directories": {
-		"lib": "./src",
-		"test": "./test"
-	},
+	"files": [
+		"dist"
+	],
 	"author": "Ilya Krukowski",
 	"publishConfig": {
 		"access": "public"

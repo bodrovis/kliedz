@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0 (13-Jul-2026)
+
+* Use TypeScript 7
+
 ## 2.1.3 (01-May-2026)
 
 * Update dependencies
