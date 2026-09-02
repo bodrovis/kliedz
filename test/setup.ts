@@ -4,8 +4,8 @@ import {
 	describe,
 	expect,
 	it,
-	MockedFunction,
+	type MockedFunction,
 	vi,
 } from "vitest";
 
-export { afterEach, beforeEach, describe, expect, it, MockedFunction, vi };
+export { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi };

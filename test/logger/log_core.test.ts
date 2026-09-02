@@ -10,7 +10,7 @@ import {
 	it,
 	type MockedFunction,
 	vi,
-} from "../setup.ts";
+} from "../setup.js";
 
 const baseParams: LogParams = { level: "info", threshold: "debug" };
 
@@ -84,11 +84,12 @@ describe("logCore", () => {
 
 	it("passes prefixBuilder through to formatter params when provided", () => {
 		const pb = () => ">>>PB<<<";
-
 		const fmtSpy = vi.fn(() => "ok") as MockedFunction<Formatter>;
+
 		const emitLogSpy = vi
 			.spyOn(emitter, "emitLog")
 			.mockImplementation(() => void 0);
+
 		vi.spyOn(priority, "shouldLog").mockReturnValue(true);
 
 		logCore(
@@ -98,10 +99,11 @@ describe("logCore", () => {
 		);
 
 		expect(fmtSpy).toHaveBeenCalledTimes(1);
-		const callArg = fmtSpy.mock.calls[0][0];
-
-		expect("prefixBuilder" in callArg).toBe(true);
-		expect(callArg.prefixBuilder).toBe(pb);
+		expect(fmtSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				prefixBuilder: pb,
+			}),
+		);
 
 		expect(emitLogSpy).toHaveBeenCalledWith("info", "ok");
 	});

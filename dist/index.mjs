@@ -198,12 +198,13 @@ function logCore(params, formatter, ...args) {
 	const { level, prefixBuilder, threshold = "info", withTimestamp = false } = params;
 	if (!shouldLog(threshold, level)) return;
 	try {
-		emitLog(level, formatter({
+		const msg = formatter({
 			level,
 			args,
 			withTimestamp,
 			...prefixBuilder ? { prefixBuilder } : {}
-		}));
+		});
+		emitLog(level, msg);
 	} catch (err) {
 		try {
 			const fallback = `[logging-error @ ${(/* @__PURE__ */ new Date()).toISOString()}] ` + (err instanceof Error ? `${err.name}: ${err.message}` : String(err));
@@ -225,10 +226,12 @@ const DEFAULT_LOG_PARAMS = Object.freeze({
 const createLogger = (formatter) => {
 	return (first, ...rest) => {
 		const provided = isLogParams(first) ? first : void 0;
-		logCore({
+		const params = {
 			...DEFAULT_LOG_PARAMS,
 			...provided
-		}, formatter, ...provided ? rest : [first, ...rest]);
+		};
+		const args = provided ? rest : [first, ...rest];
+		logCore(params, formatter, ...args);
 	};
 };
 /**
