@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.2.1 (13-Jul-2026)
+## 2.2.1 (01-Sep-2026)
 
 * Update dependencies
 * Minor code fixes
