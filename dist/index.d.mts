@@ -1,5 +1,11 @@
 //#region src/types/log_threshold.d.ts
-declare const logThresholds: readonly ["debug", "info", "warn", "error", "silent"];
+declare const logThresholds: readonly [
+	"debug",
+	"info",
+	"warn",
+	"error",
+	"silent",
+];
 type LogThreshold = (typeof logThresholds)[number];
 //#endregion
 //#region src/types/log_level.d.ts
@@ -8,10 +14,10 @@ type LogLevel = Exclude<LogThreshold, "silent">;
 //#region src/types/formatter.d.ts
 type Formatter = (config: FormatterConfig) => string;
 type FormatterConfig = {
-  level: LogLevel;
-  args: readonly unknown[];
-  withTimestamp?: boolean;
-  prefixBuilder?: () => string;
+	level: LogLevel;
+	args: readonly unknown[];
+	withTimestamp?: boolean;
+	prefixBuilder?: () => string;
 };
 //#endregion
 //#region src/logger/formatters.d.ts
@@ -30,14 +36,18 @@ declare function formatArg(arg: unknown): string;
  * @param config - Formatter config including log level and optional timestamp/custom builder.
  * @returns A formatted prefix string.
  */
-declare function getPrefix({ level, prefixBuilder, withTimestamp }: FormatterConfig): string;
+declare function getPrefix({
+	level,
+	prefixBuilder,
+	withTimestamp,
+}: FormatterConfig): string;
 //#endregion
 //#region src/types/log_params.d.ts
 type LogParams = {
-  level: LogLevel;
-  threshold?: LogThreshold;
-  withTimestamp?: boolean;
-  prefixBuilder?: () => string;
+	level: LogLevel;
+	threshold?: LogThreshold;
+	withTimestamp?: boolean;
+	prefixBuilder?: () => string;
 };
 //#endregion
 //#region src/types/log_function.d.ts
@@ -64,6 +74,20 @@ declare const logWithLevel: LogFunction;
 //#endregion
 //#region src/types/console_method.d.ts
 type ConsoleMethod = "log" | "info" | "warn" | "error";
+
 //#endregion
-export { type ConsoleMethod, type Formatter, type FormatterConfig, type LogFunction, type LogLevel, type LogParams, type LogThreshold, createLogger, formatArg, getPrefix, logWithColor, logWithLevel };
+export {
+	type ConsoleMethod,
+	createLogger,
+	type Formatter,
+	type FormatterConfig,
+	formatArg,
+	getPrefix,
+	type LogFunction,
+	type LogLevel,
+	type LogParams,
+	type LogThreshold,
+	logWithColor,
+	logWithLevel,
+};
 //# sourceMappingURL=index.d.mts.map
