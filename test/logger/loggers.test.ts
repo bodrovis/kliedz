@@ -13,18 +13,14 @@ beforeEach(() => {
 	coreSpy = vi.spyOn(coreMod, "logCore").mockImplementation(() => {});
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+	vi.restoreAllMocks();
+});
 
-describe("createLogger - allows to create custom loggers", () => {
-	it("creates a logger with custom formatter", () => {
-		const params = { level: "info", threshold: "debug" };
+describe("createLogger", () => {
+	it("creates a logger with a custom formatter", () => {
 		const customFormatter = vi.fn(() => "[CUSTOM] hello");
-
 		const customLogger = logger.createLogger(customFormatter);
-
-		customLogger(params, "hello");
-
-		expect(coreSpy).toHaveBeenCalledWith(params, customFormatter, "hello");
 
 		customLogger("foo", 42);
 
@@ -35,10 +31,19 @@ describe("createLogger - allows to create custom loggers", () => {
 			42,
 		);
 	});
+
+	it("supports custom parameters with a custom formatter", () => {
+		const customFormatter = vi.fn(() => "[CUSTOM] hello");
+		const customLogger = logger.createLogger(customFormatter);
+
+		customLogger.withParams(userParams, "hello");
+
+		expect(coreSpy).toHaveBeenCalledWith(userParams, customFormatter, "hello");
+	});
 });
 
-describe("logWithColor – overload resolution", () => {
-	it("delegates to logCore with DEFAULT params when no LogParams given", () => {
+describe("logWithColor", () => {
+	it("delegates to logCore with default parameters", () => {
 		logger.logWithColor("quick", "msg");
 
 		expect(coreSpy).toHaveBeenCalledTimes(1);
@@ -50,8 +55,8 @@ describe("logWithColor – overload resolution", () => {
 		);
 	});
 
-	it("uses caller-supplied LogParams when provided", () => {
-		logger.logWithColor(userParams, ...msgArgs);
+	it("uses caller-supplied parameters via withParams", () => {
+		logger.logWithColor.withParams(userParams, ...msgArgs);
 
 		expect(coreSpy).toHaveBeenCalledWith(
 			userParams,
@@ -61,8 +66,8 @@ describe("logWithColor – overload resolution", () => {
 	});
 });
 
-describe("logWithLevel – overload resolution", () => {
-	it("delegates with defaults when first arg is NOT LogParams", () => {
+describe("logWithLevel", () => {
+	it("delegates to logCore with default parameters", () => {
 		logger.logWithLevel("just", "text");
 
 		expect(coreSpy).toHaveBeenCalledWith(
@@ -73,19 +78,122 @@ describe("logWithLevel – overload resolution", () => {
 		);
 	});
 
-	it("forwards custom LogParams correctly", () => {
-		logger.logWithLevel({ level: "warn" }, ...msgArgs);
+	it("forwards custom parameters correctly", () => {
+		logger.logWithLevel.withParams({ level: "warn" }, ...msgArgs);
 
 		expect(coreSpy).toHaveBeenCalledWith(
-			expect.objectContaining({ level: "warn", threshold: "info" }),
+			{ level: "warn", threshold: "info" },
 			plainFormatter,
 			...msgArgs,
 		);
 	});
+
+	it("forwards valid optional parameters", () => {
+		const prefixBuilder = () => "PB";
+
+		logger.logWithLevel.withParams(
+			{
+				level: "debug",
+				withTimestamp: true,
+				prefixBuilder,
+			},
+			"x",
+			"y",
+		);
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{
+				level: "debug",
+				threshold: "info",
+				withTimestamp: true,
+				prefixBuilder,
+			},
+			plainFormatter,
+			"x",
+			"y",
+		);
+	});
+
+	it("does not override a provided threshold", () => {
+		logger.logWithLevel.withParams(
+			{ level: "warn", threshold: "error" },
+			"boom",
+		);
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "warn", threshold: "error" },
+			plainFormatter,
+			"boom",
+		);
+	});
+
+	it("supports withParams without message arguments", () => {
+		logger.logWithLevel.withParams({ level: "warn" });
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "warn", threshold: "info" },
+			plainFormatter,
+		);
+	});
+
+	it("does not mutate caller-supplied parameters", () => {
+		const params: LogParams = { level: "warn" };
+
+		logger.logWithLevel.withParams(params, "hello");
+
+		expect(params).toEqual({ level: "warn" });
+	});
 });
 
-describe("isLogParams (behaviour via createLogger)", () => {
-	it("rejects non-object (number) → uses defaults, treats value as message", () => {
+describe("message handling", () => {
+	it("treats an object containing level as message data", () => {
+		const message = {
+			level: "error",
+			message: "Something happened",
+			userId: 123,
+		};
+
+		logger.logWithLevel(message);
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			message,
+		);
+	});
+
+	it("does not interpret valid LogParams as configuration", () => {
+		const message = { level: "warn", threshold: "error" };
+
+		logger.logWithLevel(message, "hello");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			message,
+			"hello",
+		);
+	});
+
+	it("treats an object with invalid parameter types as data", () => {
+		const message = {
+			level: 42,
+			threshold: 7,
+			withTimestamp: "yes",
+			prefixBuilder: "->",
+		};
+
+		logger.logWithLevel(message, "x");
+
+		expect(coreSpy).toHaveBeenCalledWith(
+			{ level: "info", threshold: "info" },
+			plainFormatter,
+			message,
+			"x",
+		);
+	});
+
+	it("treats numbers as message data", () => {
 		logger.logWithLevel(123, ...msgArgs);
 
 		expect(coreSpy).toHaveBeenCalledWith(
@@ -96,7 +204,7 @@ describe("isLogParams (behaviour via createLogger)", () => {
 		);
 	});
 
-	it("rejects null → defaults + payload", () => {
+	it("treats null as message data", () => {
 		logger.logWithLevel(null, "x");
 
 		expect(coreSpy).toHaveBeenCalledWith(
@@ -107,98 +215,14 @@ describe("isLogParams (behaviour via createLogger)", () => {
 		);
 	});
 
-	it("rejects object without level → defaults + payload", () => {
-		logger.logWithLevel({ threshold: "warn" }, "x");
+	it("preserves undefined message arguments", () => {
+		logger.logWithLevel(undefined, "x");
 
 		expect(coreSpy).toHaveBeenCalledWith(
 			{ level: "info", threshold: "info" },
 			plainFormatter,
-			{ threshold: "warn" },
+			undefined,
 			"x",
-		);
-	});
-
-	it("rejects level of wrong type → defaults + payload", () => {
-		logger.logWithLevel({ level: 42 }, "x");
-
-		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "info", threshold: "info" },
-			plainFormatter,
-			{ level: 42 },
-			"x",
-		);
-	});
-
-	it("rejects bad threshold type → defaults + payload", () => {
-		logger.logWithLevel({ level: "info", threshold: 7 }, "x");
-
-		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "info", threshold: "info" },
-			plainFormatter,
-			{ level: "info", threshold: 7 },
-			"x",
-		);
-	});
-
-	it("rejects bad withTimestamp type → defaults + payload", () => {
-		logger.logWithLevel({ level: "warn", withTimestamp: "yes" }, "x");
-
-		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "info", threshold: "info" },
-			plainFormatter,
-			{ level: "warn", withTimestamp: "yes" },
-			"x",
-		);
-	});
-
-	it("rejects bad prefixBuilder type → defaults + payload", () => {
-		logger.logWithLevel({ level: "warn", prefixBuilder: "->" }, "x");
-
-		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "info", threshold: "info" },
-			plainFormatter,
-			{ level: "warn", prefixBuilder: "->" },
-			"x",
-		);
-	});
-
-	it("accepts minimal valid params (level only) → merges defaults", () => {
-		logger.logWithLevel({ level: "warn" }, "x");
-
-		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "warn", threshold: "info" },
-			plainFormatter,
-			"x",
-		);
-	});
-
-	it("accepts valid optional fields (withTimestamp, prefixBuilder) → forwards them", () => {
-		const pb = () => "PB";
-		logger.logWithLevel(
-			{ level: "debug", withTimestamp: true, prefixBuilder: pb },
-			"x",
-			"y",
-		);
-
-		// проверяем, что дефолт threshold домержился, а опции приехали как есть
-		const [params, fmt, ...rest] = coreSpy.mock.calls[0];
-		expect(params).toEqual({
-			level: "debug",
-			threshold: "info",
-			withTimestamp: true,
-			prefixBuilder: pb,
-		});
-		expect(fmt).toBe(plainFormatter);
-		expect(rest).toEqual(["x", "y"]);
-	});
-
-	it("does not override provided threshold", () => {
-		logger.logWithLevel({ level: "warn", threshold: "error" }, "boom");
-
-		expect(coreSpy).toHaveBeenCalledWith(
-			{ level: "warn", threshold: "error" },
-			plainFormatter,
-			"boom",
 		);
 	});
 });

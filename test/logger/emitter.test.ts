@@ -39,11 +39,31 @@ describe("emitLog", () => {
 		expect(spy).toHaveBeenCalledWith("Error message");
 	});
 
-	it("throws if level is unvalid", () => {
-		const badLevel = "fatal" as unknown as LogLevel;
+	it("throws if level is invalid", () => {
+		const badLevel = "fatal" as LogLevel;
 
-		expect(() => emitLog(badLevel, "some message")).toThrowError(
-			/Unknown method for level: "fatal"/,
+		expect(() => emitLog(badLevel, "some message")).toThrow(
+			'Unknown method for level: "fatal"',
 		);
+	});
+
+	it("rejects inherited object properties", () => {
+		expect(() => emitLog("toString" as LogLevel, "message")).toThrow(
+			'Unknown method for level: "toString"',
+		);
+	});
+
+	it("calls only the console method associated with the level", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		emitLog("warn", "Warning!");
+
+		expect(warnSpy).toHaveBeenCalledExactlyOnceWith("Warning!");
+		expect(logSpy).not.toHaveBeenCalled();
+		expect(infoSpy).not.toHaveBeenCalled();
+		expect(errorSpy).not.toHaveBeenCalled();
 	});
 });

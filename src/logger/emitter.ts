@@ -20,9 +20,11 @@ const CONSOLE_METHODS = Object.freeze({
  * @returns ConsoleMethod
  */
 function getMethodFor(level: LogLevel): ConsoleMethod {
-	const m = CONSOLE_METHODS[level];
-	if (!m) throw new Error(`Unknown method for level: "${level}"`);
-	return m;
+	if (!Object.hasOwn(CONSOLE_METHODS, level)) {
+		throw new Error(`Unknown method for level: "${level}"`);
+	}
+
+	return CONSOLE_METHODS[level];
 }
 
 /**
@@ -34,6 +36,5 @@ function getMethodFor(level: LogLevel): ConsoleMethod {
  */
 export function emitLog(level: LogLevel, message: string): void {
 	const method = getMethodFor(level);
-	const fn = console[method] as (msg?: unknown, ...rest: unknown[]) => void;
-	fn(message);
+	console[method](message);
 }

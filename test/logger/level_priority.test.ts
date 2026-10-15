@@ -1,4 +1,8 @@
-import { levelPriority, shouldLog } from "../../src/logger/level_priority.js";
+import {
+	getPriorityFor,
+	levelPriority,
+	shouldLog,
+} from "../../src/logger/level_priority.js";
 import type { LogLevel } from "../../src/types/log_level.js";
 import type { LogThreshold } from "../../src/types/log_threshold.js";
 import { describe, expect, it } from "../setup.js";
@@ -24,6 +28,10 @@ describe("levelPriority", () => {
 		expect(levelPriority.debug).toBeLessThan(levelPriority.info);
 		expect(levelPriority.info).toBeLessThan(levelPriority.warn);
 		expect(levelPriority.warn).toBeLessThan(levelPriority.error);
+	});
+
+	it("should be immutable", () => {
+		expect(Object.isFrozen(levelPriority)).toBe(true);
 	});
 });
 
@@ -57,11 +65,27 @@ describe("shouldLog", () => {
 		expect(shouldLog("debug", "error")).toBe(true);
 	});
 
-	it("throws if level is unknown", () => {
-		const badLevel = "fatal" as unknown as LogLevel;
+	it("throws if threshold is unknown", () => {
+		const badThreshold = "fatal" as LogThreshold;
 
-		expect(() => shouldLog(badLevel, "info")).toThrowError(
-			/Unknown log level\/threshold: "fatal"/,
+		expect(() => shouldLog(badThreshold, "info")).toThrow(
+			'Unknown log level/threshold: "fatal"',
+		);
+	});
+
+	it("throws if level is unknown", () => {
+		const badLevel = "fatal" as LogLevel;
+
+		expect(() => shouldLog("info", badLevel)).toThrow(
+			'Unknown log level/threshold: "fatal"',
+		);
+	});
+});
+
+describe("getPriorityFor", () => {
+	it("rejects inherited object properties", () => {
+		expect(() => getPriorityFor("toString" as LogLevel)).toThrow(
+			'Unknown log level/threshold: "toString"',
 		);
 	});
 });

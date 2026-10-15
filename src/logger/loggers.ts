@@ -14,12 +14,15 @@ const DEFAULT_LOG_PARAMS = Object.freeze({
 } as const satisfies LogParams);
 
 export const createLogger = (formatter: Formatter): LogFunction => {
-	return (first: LogParams | unknown, ...rest: unknown[]): void => {
-		const provided = isLogParams(first) ? first : undefined;
-		const params: LogParams = { ...DEFAULT_LOG_PARAMS, ...provided };
-		const args = provided ? rest : [first, ...rest];
-		logCore(params, formatter, ...args);
+	const logger = (...args: unknown[]): void => {
+		logCore(DEFAULT_LOG_PARAMS, formatter, ...args);
 	};
+
+	logger.withParams = (params: LogParams, ...args: unknown[]): void => {
+		logCore({ ...DEFAULT_LOG_PARAMS, ...params }, formatter, ...args);
+	};
+
+	return logger;
 };
 
 /**
@@ -37,35 +40,3 @@ export const logWithColor: LogFunction = createLogger(colorFormatter);
  * 2. `(params, message, ...rest)` – caller supplies `LogParams`.
  */
 export const logWithLevel: LogFunction = createLogger(plainFormatter);
-
-/**
- * Runtime guard that checks whether an arbitrary value is a `LogParams` bag.
- * (Deliberately not exhaustive – we only need to know core keys.)
- */
-function isLogParams(obj: unknown): obj is LogParams {
-	if (typeof obj !== "object" || obj === null) return false;
-	const o = obj as Record<string, unknown>;
-
-	if (typeof o.level !== "string") return false;
-
-	if (
-		"threshold" in o &&
-		o.threshold !== undefined &&
-		typeof o.threshold !== "string"
-	)
-		return false;
-	if (
-		"withTimestamp" in o &&
-		o.withTimestamp !== undefined &&
-		typeof o.withTimestamp !== "boolean"
-	)
-		return false;
-	if (
-		"prefixBuilder" in o &&
-		o.prefixBuilder !== undefined &&
-		typeof o.prefixBuilder !== "function"
-	)
-		return false;
-
-	return true;
-}

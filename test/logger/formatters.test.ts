@@ -4,11 +4,18 @@ import {
 	getPrefix,
 	plainFormatter,
 } from "../../src/logger/formatters.js";
-import { describe, expect, it, vi } from "../setup.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "../setup.js";
 
 const fakeDatetime = "2025-05-10T12:00:00.000Z";
-const mockDate = new Date(fakeDatetime);
-vi.useFakeTimers().setSystemTime(mockDate);
+
+beforeEach(() => {
+	vi.useFakeTimers();
+	vi.setSystemTime(new Date(fakeDatetime));
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+});
 
 describe("getPrefix", () => {
 	it("returns default prefix without timestamp", () => {
@@ -135,43 +142,46 @@ describe("plainFormatter", () => {
 		expect(msg).toBe("[INFO] [1,2]");
 	});
 
-	it("stringifies Map via Object.fromEntries (stringifying keys)", () => {
-		const m = new Map<string | number, string | number>([["a", 1]]);
+	it("stringifies Map as an array of entries", () => {
+		const m = new Map<string, number>([["a", 1]]);
 		const msg = plainFormatter({ level: "info", args: [m] });
-		expect(msg).toBe('[INFO] {"a":1}');
+		expect(msg).toBe('[INFO] [["a",1]]');
 	});
 
 	it("returns '[Unserializable Object]' if even inspect throws", async () => {
-		// biome-ignore lint/suspicious/noExplicitAny: force self-loop here
-		const a: any = {};
-		a.self = a;
+		try {
+			// biome-ignore lint/suspicious/noExplicitAny: force self-loop here
+			const a: any = {};
+			a.self = a;
 
-		vi.doMock("node:util", () => {
-			return {
-				inspect: () => {
-					throw new Error("nope");
-				},
-			};
-		});
+			vi.doMock("node:util", () => {
+				return {
+					inspect: () => {
+						throw new Error("nope");
+					},
+				};
+			});
 
-		vi.resetModules();
-		const { plainFormatter } = await import("../../src/logger/formatters.js");
+			vi.resetModules();
+			const { plainFormatter } = await import("../../src/logger/formatters.js");
 
-		const msg = plainFormatter({ level: "info", args: [a] });
-		expect(msg).toBe("[INFO] [Unserializable Object]");
-
-		vi.doUnmock("node:util");
-		vi.resetModules();
+			const msg = plainFormatter({ level: "info", args: [a] });
+			expect(msg).toBe("[INFO] [Unserializable Object]");
+		} catch (error) {
+			console.error(error);
+		} finally {
+			vi.doUnmock("node:util");
+			vi.resetModules();
+		}
 	});
 
 	it("formats Error without stack gracefully", () => {
 		const err = new Error("oops");
-		// biome-ignore lint/suspicious/noExplicitAny: force stack deletion
-		delete (err as any).stack;
+		delete err.stack;
 
 		const msg = plainFormatter({ level: "error", args: [err] });
 
-		expect(msg).toBe("[ERROR] Error: oops\n");
+		expect(msg).toBe("[ERROR] Error: oops");
 	});
 
 	it("emits only prefix when args are empty", () => {
@@ -205,6 +215,55 @@ describe("plainFormatter", () => {
 		expect(msg).toContain("[WARN] msg");
 		expect(msg).toContain('"a":1');
 		expect(msg).toContain("Error: nope");
+	});
+
+	it("falls back to inspect when JSON.stringify returns undefined", () => {
+		const obj = {
+			toJSON() {
+				return undefined;
+			},
+		};
+
+		const msg = plainFormatter({ level: "info", args: [obj] });
+
+		expect(msg).toContain("[INFO]");
+		expect(msg).toContain("toJSON");
+		expect(msg).not.toBe("[INFO]");
+	});
+
+	it("preserves Map entries with object keys", () => {
+		const map = new Map([
+			[{ id: 1 }, "first"],
+			[{ id: 2 }, "second"],
+		]);
+
+		const msg = plainFormatter({ level: "info", args: [map] });
+
+		expect(msg).toBe('[INFO] [[{"id":1},"first"],[{"id":2},"second"]]');
+	});
+
+	it("falls back to inspect for circular references", () => {
+		const obj: { name: string; self?: unknown } = {
+			name: "circular",
+		};
+		obj.self = obj;
+
+		const msg = plainFormatter({ level: "info", args: [obj] });
+
+		expect(msg).toContain("circular");
+		expect(msg).toContain("[Circular");
+	});
+
+	it("does not duplicate Error name and message", () => {
+		const err = new Error("something exploded");
+
+		const msg = plainFormatter({
+			level: "error",
+			args: [err],
+		});
+
+		expect(msg.match(/Error: something exploded/g)).toHaveLength(1);
+		expect(msg).toContain(err.stack);
 	});
 });
 

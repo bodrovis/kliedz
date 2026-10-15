@@ -40,8 +40,9 @@ export const colorFormatter: Formatter = (config) => {
  */
 export function formatArg(arg: unknown): string {
 	if (typeof arg === "undefined") return "undefined";
-	if (arg instanceof Error)
-		return `${arg.name}: ${arg.message}\n${arg.stack ?? ""}`;
+	if (arg instanceof Error) {
+		return arg.stack ?? `${arg.name}: ${arg.message}`;
+	}
 	if (typeof arg === "string") return arg;
 	if (typeof arg === "bigint") return `${arg}n`;
 	if (typeof arg === "function")
@@ -49,13 +50,19 @@ export function formatArg(arg: unknown): string {
 
 	if (typeof arg === "object" && arg !== null) {
 		try {
-			return JSON.stringify(arg, jsonReplacer);
-		} catch {
-			try {
-				return inspect(arg, { depth: null, breakLength: Infinity });
-			} catch {
-				return "[Unserializable Object]";
+			const json = JSON.stringify(arg, jsonReplacer);
+
+			if (json !== undefined) {
+				return json;
 			}
+		} catch {
+			// Fall back to inspect()
+		}
+
+		try {
+			return inspect(arg, { depth: null, breakLength: Infinity });
+		} catch {
+			return "[Unserializable Object]";
 		}
 	}
 	return String(arg);
@@ -86,7 +93,7 @@ export function getPrefix({
 function jsonReplacer(_k: string, v: unknown) {
 	if (typeof v === "bigint") return String(v);
 	if (typeof v === "symbol") return v.toString();
-	if (v instanceof Map) return Object.fromEntries(v);
+	if (v instanceof Map) return Array.from(v.entries());
 	if (v instanceof Set) return Array.from(v);
 	return v;
 }

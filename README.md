@@ -6,27 +6,27 @@
 [![Code Coverage][coverage-image]][coverage-url]
 [![Maintainability][maintainability-image]][maintainability-url]
 
-**Kliedz** is a stateless logging utility for JavaScript and TypeScript written with functional approach.
+**Kliedz** is a stateless logging utility for JavaScript and TypeScript, built using a functional approach.
 
 ## Installation
 
-```
+```bash
 npm install kliedz
 ```
 
 ## What is this?
 
-This is a simple logging system for JS/TS. It lets you conditionally log messages based on a configured log level — without storing state, mutating anything, or pulling in extra dependencies.
+Kliedz is a simple logging system for JS/TS. It lets you conditionally log messages based on a configured log level — without storing state, mutating anything, or pulling in extra runtime dependencies.
 
 It works around two main concepts: **level** and **threshold**.
 
 ### `level`
 
-The severity of the message you're logging that also determines how the message is printed (which `console` method is used):
+The severity of the message you're logging. It also determines which `console` method is used:
 
 - `debug` → `console.log()`
-- `info`  → `console.info()`
-- `warn`  → `console.warn()`
+- `info` → `console.info()`
+- `warn` → `console.warn()`
 - `error` → `console.error()`
 
 ### `threshold`
@@ -48,7 +48,7 @@ import { logWithColor, logWithLevel } from "kliedz";
 
 // Quick start
 logWithColor("Hey!");
-logWithLevel({ level: "warn" }, "Something feels off");
+logWithLevel.withParams({ level: "warn" }, "Something feels off");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Basic "just log it" call (uses default level = "info", threshold = "info")
@@ -56,31 +56,35 @@ logWithLevel({ level: "warn" }, "Something feels off");
 
 logWithColor("Hello from the default logger");
 // [INFO] Hello from the default logger
-// printed in cyan color
+// printed in cyan
 
 logWithLevel("Just a plain info message", 42);
 // [INFO] Just a plain info message 42
 // printed without color
 
+// Objects are always treated as message data in regular calls
+logWithLevel({ level: "warn", message: "This is just an object" });
+// [INFO] {"level":"warn","message":"This is just an object"}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Fully configured log call
 // ─────────────────────────────────────────────────────────────────────────────
 
-logWithColor(
+logWithColor.withParams(
   {
-    level: "warn", // threshold, is optional, defaults to "info"
+    level: "warn", // threshold is optional, defaults to "info"
   },
-  "This is a warning with color"
+  "This is a warning with color",
 );
 // [WARN] This is a warning with color
-// printed in orange
+// printed in yellow
 
-logWithLevel(
+logWithLevel.withParams(
   {
     level: "debug",
     threshold: "debug",
   },
-  "Low-level debug info"
+  "Low-level debug info",
 );
 // [DEBUG] Low-level debug info
 // printed without color
@@ -89,7 +93,7 @@ logWithLevel(
 // Including a timestamp in the prefix
 // ─────────────────────────────────────────────────────────────────────────────
 
-logWithColor(
+logWithColor.withParams(
   {
     level: "error",
     threshold: "debug",
@@ -99,13 +103,13 @@ logWithColor(
 );
 // 2025-05-10T13:52:59.845Z [ERROR] Error occurred!
 
-logWithLevel(
+logWithLevel.withParams(
   {
     level: "info",
     threshold: "debug",
     withTimestamp: true,
   },
-  "Startup complete"
+  "Startup complete",
 );
 // 2025-05-10T13:53:15.240Z [INFO] Startup complete
 
@@ -113,17 +117,17 @@ logWithLevel(
 // With a custom prefixBuilder
 // ─────────────────────────────────────────────────────────────────────────────
 
-logWithLevel(
+logWithLevel.withParams(
   {
     level: "info",
     threshold: "debug",
     prefixBuilder: () => ">>> INFO <<<",
   },
-  "Using a custom prefix builder"
+  "Using a custom prefix builder",
 );
 // >>> INFO <<< Using a custom prefix builder
 
-logWithColor(
+logWithColor.withParams(
   {
     level: "warn",
     prefixBuilder: () => {
@@ -131,7 +135,7 @@ logWithColor(
       return `!!${ts}[WARNING]!!`;
     },
   },
-  "Custom warning with timestamped prefix"
+  "Custom warning with timestamped prefix",
 );
 // !!2025-05-10T14:03:32.302Z[WARNING]!! Custom warning with timestamped prefix
 ```
@@ -140,65 +144,70 @@ logWithColor(
 
 This package provides two main logging functions:
 
-- **`logWithLevel()`** – logs plain messages (no colors)
-- **`logWithColor()`** – logs messages with ANSI-colored `[LEVEL]` prefixes
+- **`logWithLevel()`** — logs plain messages without colors.
+- **`logWithColor()`** — logs messages with ANSI colors based on their severity.
 
-Both functions use the same core logic under the hood. You can call them in two ways:
+Both functions use the same core logic and support two ways of logging messages.
 
 ### Option 1: Just log something (default config)
 
-If you just want to log without caring about configuration:
+If you want to log without specifying configuration:
 
 ```ts
 logWithColor("hello world");
 logWithLevel("something happened", { id: 123 });
 ```
 
-This uses default settings:
+This uses the default settings:
 
 - `level`: `"info"`
-- `threshold`: `"info"` (so messages with level `"info"`, `"warn"`, or `"error"` will be printed)
+- `threshold`: `"info"`
+
+All arguments are treated as message data, including objects containing properties such as `level` or `threshold`.
 
 ### Option 2: Log with full control
 
-If you need to configure how a message is treated, pass a `LogParams` object as the first argument:
+To configure a log message, use the `withParams()` method:
 
 ```ts
-logWithColor(
+logWithColor.withParams(
   { level: "warn", threshold: "debug", withTimestamp: true },
-  "warning issued"
+  "warning issued",
 );
 
-logWithLevel(
+logWithLevel.withParams(
   { level: "debug", threshold: "warn" },
-  "this will be filtered out"
+  "this will be filtered out",
 );
 ```
 
+The first argument to `withParams()` is a `LogParams` object. All subsequent arguments are message data.
+
 You can control:
 
-- `level`: The severity of the current message (`"debug"`, `"info"`, `"warn"`, `"error"`)
-- `threshold`: The cutoff level. Only messages with `level >= threshold` are printed.
-- `withTimestamp`: If true, includes an ISO timestamp in the prefix.
-- `prefixBuilder`: Optional function to fully customize the prefix format.
+- `level`: The severity of the current message (`"debug"`, `"info"`, `"warn"`, `"error"`). Required.
+- `threshold`: The cutoff level. Only messages with `level >= threshold` are printed. Defaults to `"info"`.
+- `withTimestamp`: If `true`, includes an ISO timestamp in the prefix.
+- `prefixBuilder`: Optional function to fully customize the prefix format. Overrides the default prefix, including the timestamp.
 
-## Creating custom logger
+## Creating a custom logger
 
-It's possible to create a new logger with a custom formatting logic. For example:
+You can create a logger with your own formatting logic using `createLogger()`.
 
-```js
+For example, this formatter produces JSON output:
+
+```ts
 import { createLogger, getPrefix, formatArg } from "kliedz";
 import type { Formatter, FormatterConfig } from "kliedz";
 
 // Define a custom formatter
 const jsonFormatter: Formatter = (config: FormatterConfig): string => {
-  const prefix = getPrefix(config); // builds [LEVEL] or timestamped prefix
+  const prefix = getPrefix(config);
 
-  // config.args contains one or multiple values to log
-  // Create your message, optionally use formatArg to format these arguments
-  const message = config.args.map(formatArg).join(" "); 
+  // Convert message arguments into strings
+  const message = config.args.map(formatArg).join(" ");
 
-  // Return final string to log
+  // Return the final formatted log message
   return JSON.stringify({
     timestamp: new Date().toISOString(),
     level: config.level,
@@ -207,14 +216,34 @@ const jsonFormatter: Formatter = (config: FormatterConfig): string => {
   });
 };
 
-// Create logger with formatter
+// Create a logger with the custom formatter
 const logJson = createLogger(jsonFormatter);
 
-// Use it, optionally providing level and threshold
+// Default configuration
 logJson("This is a default info log");
-logJson({ level: "warn" }, "Something might be wrong", { id: 123 });
-logJson({ level: "error", withTimestamp: true }, new Error("kaboom"));
+
+// Custom level and threshold
+logJson.withParams(
+  { level: "warn" },
+  "Something might be wrong",
+  { id: 123 },
+);
+
+// Custom timestamp and error logging
+logJson.withParams(
+  { level: "error", withTimestamp: true },
+  new Error("kaboom"),
+);
 ```
+
+Custom loggers support the same methods as the built-in loggers:
+
+- `logger(message, ...args)` — uses the default configuration.
+- `logger.withParams(params, ...args)` — uses the supplied configuration, merged with the defaults.
+
+The formatter receives a `FormatterConfig` object containing the current log level, message arguments, timestamp setting, and optional custom prefix builder.
+
+It must return a string, which is then passed to the appropriate console method.
 
 ## License
 

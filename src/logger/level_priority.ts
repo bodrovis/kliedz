@@ -12,12 +12,14 @@ function fromEntriesStrict<K extends PropertyKey, V>(
  * Lower numbers mean more verbose; higher means more critical.
  * "silent" is given a very high value to suppress all output.
  */
-export const levelPriority = fromEntriesStrict(
-	logThresholds.map(
-		(level, index) =>
-			[level, level === "silent" ? Number.POSITIVE_INFINITY : index] as const,
+export const levelPriority = Object.freeze(
+	fromEntriesStrict(
+		logThresholds.map(
+			(level, index) =>
+				[level, level === "silent" ? Number.POSITIVE_INFINITY : index] as const,
+		),
 	),
-) satisfies Record<LogThreshold, number>;
+) satisfies Readonly<Record<LogThreshold, number>>;
 
 /**
  * Returns the numeric priority for a given log level or threshold.
@@ -27,10 +29,11 @@ export const levelPriority = fromEntriesStrict(
  * @returns Priority number
  */
 export function getPriorityFor(level: LogLevel | LogThreshold): number {
-	const p = levelPriority[level];
-	if (p === undefined)
+	if (!Object.hasOwn(levelPriority, level)) {
 		throw new Error(`Unknown log level/threshold: "${level}"`);
-	return p;
+	}
+
+	return levelPriority[level];
 }
 
 /**
